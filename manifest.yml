@@ -1,0 +1,5 @@
+---
+applications:
+- name: cf-elasticsearch-broker
+  memory: 128MB
+  buildpack: ruby_buildpack
