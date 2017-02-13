@@ -1,7 +1,6 @@
 require 'elasticsearch'
 
 class ElasticsearchService
-
   attr_reader :client
 
   def initialize(host, port)
@@ -19,5 +18,4 @@ class ElasticsearchService
   def delete_index!(name)
     client.indices.delete(index: name)
   end
-
 end

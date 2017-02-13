@@ -9,8 +9,8 @@ class ElasticsearchBroker < Sinatra::Base
 
     settings_filename = defined?(SETTINGS_FILENAME) ? SETTINGS_FILENAME : 'config/settings.yml'
     @settings = YAML.load_file(settings_filename)
-    @elasticsearch_settings = @settings.fetch("elasticsearch")
-    @credentials = @settings.fetch("basic_auth")
+    @elasticsearch_settings = @settings.fetch('elasticsearch')
+    @credentials = @settings.fetch('basic_auth')
   end
 
   def protected!
@@ -20,34 +20,33 @@ class ElasticsearchBroker < Sinatra::Base
   end
 
   def authorized?
-    @auth =  Rack::Auth::Basic::Request.new(request.env)
-    @auth.provided? and @auth.basic? and @auth.credentials and @auth.credentials == [@credentials.fetch("username"), @credentials.fetch("password")]
+    @auth = Rack::Auth::Basic::Request.new(request.env)
+    @auth.provided? && @auth.basic? && @auth.credentials && @auth.credentials == [@credentials.fetch('username'), @credentials.fetch('password')]
   end
 
   get '/v2/catalog' do
     protected!
-    @settings.fetch("catalog").to_json
+    @settings.fetch('catalog').to_json
   end
 
   put '/v2/service_instances/:id' do |id|
     if elasticsearch_service.index_exists?(index_name(id))
       status 409
-      { 'description' => "Index already exists" }.to_json
+      { 'description' => 'Index already exists' }.to_json
     else
       elasticsearch_service.create_index!(index_name(id))
       status 201
-      { 'dashboard_url' => "http://#{@elasticsearch_settings.fetch("host")}:#{@elasticsearch_settings.fetch("port")}/#{index_name(id)}" }.to_json
+      { 'dashboard_url' => "http://#{@elasticsearch_settings.fetch('host')}:#{@elasticsearch_settings.fetch('port')}/#{index_name(id)}" }.to_json
     end
   end
 
   put '/v2/service_instances/:instance_id/service_bindings/:id' do
     instance_id = params[:instance_id] # index name
-    binding_id = params[:id]
 
-    uri = "http://#{@elasticsearch_settings.fetch("host")}:#{@elasticsearch_settings.fetch("port")}/#{index_name(instance_id)}"
+    uri = "http://#{@elasticsearch_settings.fetch('host')}:#{@elasticsearch_settings.fetch('port')}/#{index_name(instance_id)}"
     credentials = {
-      uri: uri, hostname: "#{@elasticsearch_settings.fetch("host")}",
-      port: "#{@elasticsearch_settings.fetch("port")}", index: index_name(instance_id)
+      uri: uri, hostname: @elasticsearch_settings.fetch('host').to_s,
+      port: @elasticsearch_settings.fetch('port').to_s, index: index_name(instance_id)
     }
 
     status 201
@@ -70,7 +69,7 @@ class ElasticsearchBroker < Sinatra::Base
 
   delete '/v2/service_instances/:id' do |id|
     if elasticsearch_service.index_exists?(index_name(id))
-       elasticsearch_service.delete_index!(index_name(id))
+      elasticsearch_service.delete_index!(index_name(id))
 
       status 200
       {}.to_json
@@ -83,8 +82,8 @@ class ElasticsearchBroker < Sinatra::Base
   private
 
   def elasticsearch_service
-    ElasticsearchService.new(@elasticsearch_settings.fetch("host"),
-                             @elasticsearch_settings.fetch("port"))
+    ElasticsearchService.new(@elasticsearch_settings.fetch('host'),
+                             @elasticsearch_settings.fetch('port'))
   end
 
   def index_name(id)
